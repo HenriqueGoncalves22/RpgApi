@@ -4,12 +4,12 @@ using System.Data.Common;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Threading.Tasks;
-using GamingAPI.Models;
+using RpgApi.Models;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.EntityFrameworkCore;
-using RpgApi.Models;
 using RpgApi.Models.Enuns;
 using GamingAPI.Utils;
+using GamingAPI.Models;
 
 namespace RpgApi.Data
 {
