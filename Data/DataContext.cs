@@ -37,6 +37,12 @@ namespace RpgApi.Data
             .HasForeignKey(e => e.UsuarioId)
             .IsRequired(false);
             
+            //Relacionamento One to One (Um para um)
+            modelBuilder.Entity<Personagem>()
+            .HasOne(e => e.Arma)
+            .WithOne(e => e.Personagem)
+            .HasForeignKey<Arma>(e => e.PersonagemId)
+            .IsRequired();
 
             modelBuilder.Entity<Personagem>().HasData
             (
@@ -50,13 +56,13 @@ namespace RpgApi.Data
             );
             modelBuilder.Entity<Arma>().HasData
             (
-              new Arma() { Id = 1, Nome = "Arco e Flecha", Dano = 35},
-              new Arma() { Id = 2, Nome = "Espada", Dano = 33},
-              new Arma() { Id = 3, Nome = "Machado", Dano = 31},
-              new Arma() { Id = 4, Nome = "Punho", Dano = 30},
-              new Arma() { Id = 5, Nome = "Chicote", Dano = 34},
-              new Arma() { Id = 6, Nome = "Foice", Dano = 33},
-              new Arma() { Id = 7, Nome = "Cajado", Dano = 32}
+              new Arma() { Id = 1, Nome = "Arco e Flecha", Dano = 35, PersonagemId = 1},
+              new Arma() { Id = 2, Nome = "Espada", Dano = 33, PersonagemId = 2},
+              new Arma() { Id = 3, Nome = "Machado", Dano = 31, PersonagemId = 3},
+              new Arma() { Id = 4, Nome = "Punho", Dano = 30, PersonagemId = 4},
+              new Arma() { Id = 5, Nome = "Chicote", Dano = 34, PersonagemId = 5},
+              new Arma() { Id = 6, Nome = "Foice", Dano = 33, PersonagemId = 6},
+              new Arma() { Id = 7, Nome = "Cajado", Dano = 32, PersonagemId = 7}
             );
             
               //Início da criação do usuário padrão.
