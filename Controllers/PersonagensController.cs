@@ -21,7 +21,7 @@ namespace RpgApi.Controllers
             _context = context;
         }
 
-        [HttpGet("{id}")]
+      /*  [HttpGet("{id}")]
         public async Task<IActionResult> GetSingle(int id)
         {
             try
@@ -38,7 +38,7 @@ namespace RpgApi.Controllers
             {
                 return BadRequest(ex.Message);
             }
-        }
+        }*/
         [HttpGet("GetAll")]
         
             public async Task<IActionResult> Get()
