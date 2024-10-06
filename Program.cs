@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using RpgApi.Data;
 
+
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<DataContext>(options => {options.UseSqlServer(builder.Configuration.GetConnectionString("ConexaoLocal"));});
 
@@ -9,6 +10,10 @@ builder.Services.AddDbContext<DataContext>(options => {options.UseSqlServer(buil
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
+
+builder.Services.AddControllers().AddNewtonsoftJson(options =>  options.SerializerSettings.ReferenceLoopHandling =
+Newtonsoft.Json.ReferenceLoopHandling.Ignore
+); 
 
 var app = builder.Build();
 

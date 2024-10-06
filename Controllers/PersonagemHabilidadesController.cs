@@ -5,6 +5,7 @@ using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using RpgApi.Data;
 using RpgApi.Models;
 
@@ -51,9 +52,46 @@ namespace RpgApi.Controllers
             }
         }
 
+ /*(5) Criar um método na classe PersonagemHabilidadesController.cs que retorne uma lista de
+PersonagemHabilidade de acordo com o id do personagem passado por parâmetro. Using de
+System.Collections.Generic e System.Linq */
+        [HttpGet("GetBy{id}")]
+        public IActionResult GetSingle(string habilidade)
+        {
+            List<Personagem> listaBusca = personagens.FindAll(p => p.habilidade.Contains(habilidade));
+            if(listaBusca.IsNullOrEmpty())
+                return BadRequest("NotFound");
+            
+            return Ok(listaBusca);
+        }
 
+/*(6) Criar um método na classe PersonagemHabilidadesController.cs que retorne uma lista de Habilidades
+ com a rota chamada GetHabilidades. */
+        [HttpGet("GetHabilidades")]
+        public IActionResult GetAll()
+        {
+            return Ok(PersonagemHabilidades);
+        }
 
+ /*(7) Criar um método na controller PersonagemHabilidadesController.cs que remova os dados da tabela 
+ PersonagemHabilidades. Esse método terá que ser do tipo Post (com rota chamada DeletePersonagemHabilidade)
+pelo fato de ter que receber o objeto como parâmetro, contendo o id do personagem e da habilidade. 
+Use o FirstOrDefaultAsync que exige o using System.Linq.*/
+        [HttpPost("DeletePersonagemHabilidade/`{id}/{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            try
+            {
+                Personagem pRemover = await _context.TB_PERSONAGENS_HABILIDADES.FirstOrDefaultAsync(p => p.Id == id);
+                _context.TB_PERSONAGENS.Remove(pRemover);
+                int linhasAfetadas = await _context.SaveChangesAsync();
 
-
+                return Ok(linhasAfetadas);
+            }
+            catch(System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }
