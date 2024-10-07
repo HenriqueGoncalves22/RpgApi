@@ -27,7 +27,8 @@ namespace RpgApi.Controllers
             {
                 Personagem personagem = await _context.TB_PERSONAGENS
                 .Include(p => p.Arma)
-                .Include(p => p.PersonagemHabilidades).ThenInclude(ps => ps.Habilidade)
+                .Include(p => p.PersonagemHabilidade)
+                .ThenInclude(ps => ps.Habilidade)
                 .FirstOrDefaultAsync(p => p.Id == novoPersonagemHabilidade.PersonagemId);
 
                 if (personagem == null)
@@ -52,46 +53,51 @@ namespace RpgApi.Controllers
             }
         }
 
- /*(5) Criar um método na classe PersonagemHabilidadesController.cs que retorne uma lista de
-PersonagemHabilidade de acordo com o id do personagem passado por parâmetro. Using de
-System.Collections.Generic e System.Linq */
-        [HttpGet("GetBy{id}")]
-        public IActionResult GetSingle(string habilidade)
-        {
-            List<Personagem> listaBusca = personagens.FindAll(p => p.habilidade.Contains(habilidade));
-            if(listaBusca.IsNullOrEmpty())
-                return BadRequest("NotFound");
-            
-            return Ok(listaBusca);
-        }
+ // (5) Método GetByPersonagemId
+[HttpGet("GetByPersonagemId/{id}")]
+public async Task<IActionResult> GetByPersonagemId(int id)
+{
+    var habilidades = await _context.TB_PERSONAGENS_HABILIDADES
+        .Where(ph => ph.PersonagemId == id)
+        .ToListAsync();
 
-/*(6) Criar um método na classe PersonagemHabilidadesController.cs que retorne uma lista de Habilidades
- com a rota chamada GetHabilidades. */
-        [HttpGet("GetHabilidades")]
-        public IActionResult GetAll()
-        {
-            return Ok(PersonagemHabilidades);
-        }
+    if (habilidades == null || habilidades.Count == 0)
+        return NotFound("Nenhuma habilidade encontrada para este personagem.");
 
- /*(7) Criar um método na controller PersonagemHabilidadesController.cs que remova os dados da tabela 
- PersonagemHabilidades. Esse método terá que ser do tipo Post (com rota chamada DeletePersonagemHabilidade)
-pelo fato de ter que receber o objeto como parâmetro, contendo o id do personagem e da habilidade. 
-Use o FirstOrDefaultAsync que exige o using System.Linq.*/
-        [HttpPost("DeletePersonagemHabilidade/`{id}/{id}")]
-        public async Task<IActionResult> Delete(int id)
-        {
-            try
-            {
-                Personagem pRemover = await _context.TB_PERSONAGENS_HABILIDADES.FirstOrDefaultAsync(p => p.Id == id);
-                _context.TB_PERSONAGENS.Remove(pRemover);
-                int linhasAfetadas = await _context.SaveChangesAsync();
+    return Ok(habilidades);
+}
 
-                return Ok(linhasAfetadas);
-            }
-            catch(System.Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+// (6) Método GetHabilidades
+[HttpGet("GetHabilidades")]
+public async Task<IActionResult> GetHabilidades()
+{
+    var habilidades = await _context.TB_HABILIDADES.ToListAsync();
+    return Ok(habilidades);
+}
+
+// (7) Método DeletePersonagemHabilidade
+[HttpPost("DeletePersonagemHabilidade/{personagemId}/{habilidadeId}")]
+public async Task<IActionResult> DeletePersonagemHabilidade(int personagemId, int habilidadeId)
+{
+    try
+    {
+        var personagemHabilidade = await _context.TB_PERSONAGENS_HABILIDADES
+            .FirstOrDefaultAsync(ph => ph.PersonagemId == personagemId && ph.HabilidadeId == habilidadeId);
+
+        if (personagemHabilidade == null)
+        {
+            return NotFound("Personagem e Habilidade não estão associados.");
         }
+        _context.TB_PERSONAGENS_HABILIDADES.Remove(personagemHabilidade);
+        int linhasAfetadas = await _context.SaveChangesAsync();
+
+        return Ok($"Relação removida com sucesso: {linhasAfetadas}");
+    }
+    catch (System.Exception ex)
+    {
+        return BadRequest(ex.Message);
+    }
+}
+
     }
 }

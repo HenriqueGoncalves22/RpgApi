@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using RpgApi.Data;
+using Microsoft.AspNetCore.Mvc.NewtonsoftJson;
 
 
 var builder = WebApplication.CreateBuilder(args);
