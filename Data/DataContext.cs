@@ -70,6 +70,7 @@ namespace RpgApi.Data
               new Arma() { Id = 7, Nome = "Cajado", Dano = 32, PersonagemId = 7}
             );
             
+            //Many To Many
             modelBuilder.Entity<PersonagemHabilidade>()
               .HasKey(ph => new {ph.PersonagemId, ph.HabilidadeId});
             modelBuilder.Entity<Habilidade>().HasData
@@ -117,7 +118,8 @@ namespace RpgApi.Data
 
         protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
         {
-            configurationBuilder.Properties<string>().HaveColumnType("varchar").HaveMaxLength(200);
+            configurationBuilder.Properties<string>()
+            .HaveColumnType("varchar").HaveMaxLength(200);
 
             base.ConfigureConventions(configurationBuilder);
         }

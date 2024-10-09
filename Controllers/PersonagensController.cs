@@ -21,16 +21,16 @@ namespace RpgApi.Controllers
             _context = context;
         }
 
-      /*  [HttpGet("{id}")]
+      [HttpGet("{id}")]
         public async Task<IActionResult> GetSingle(int id)
         {
             try
             {
                 Personagem p = await _context.TB_PERSONAGENS
                 .Include(ar => ar.Arma)
-                .Include(ph => ph.PersonagemHabilidades)
+                .Include(ph => ph.PersonagemHabilidade)
                     .ThenInclude(h => h.Habilidade)
-                .FirstOrDefaultAsync(pBusca => pBusca.Id == Id);
+                .FirstOrDefaultAsync(pBusca => pBusca.Id == id);
                 
                 return Ok(p);
             }
@@ -38,7 +38,7 @@ namespace RpgApi.Controllers
             {
                 return BadRequest(ex.Message);
             }
-        }*/
+        }
         [HttpGet("GetAll")]
         
             public async Task<IActionResult> Get()

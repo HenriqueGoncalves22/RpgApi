@@ -54,50 +54,62 @@ namespace RpgApi.Controllers
         }
 
  // (5) Método GetByPersonagemId
-[HttpGet("GetByPersonagemId/{id}")]
-public async Task<IActionResult> GetByPersonagemId(int id)
-{
-    var habilidades = await _context.TB_PERSONAGENS_HABILIDADES
-        .Where(ph => ph.PersonagemId == id)
-        .ToListAsync();
-
-    if (habilidades == null || habilidades.Count == 0)
-        return NotFound("Nenhuma habilidade encontrada para este personagem.");
-
-    return Ok(habilidades);
-}
+[HttpGet("{personagemId}")]
+        public async Task<IActionResult> GetHabilidadesPersonagem(int personagemId)
+        {
+            try
+            {
+                List<PersonagemHabilidade> phLista = new List<PersonagemHabilidade>();
+                phLista = await _context.TB_PERSONAGENS_HABILIDADES
+                .Include(p => p.Personagem)
+                .Include(p => p.Habilidade)
+                .Where(p => p.Personagem.Id == personagemId).ToListAsync();
+                return Ok(phLista);
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
 // (6) Método GetHabilidades
 [HttpGet("GetHabilidades")]
-public async Task<IActionResult> GetHabilidades()
-{
-    var habilidades = await _context.TB_HABILIDADES.ToListAsync();
-    return Ok(habilidades);
-}
+        public async Task<IActionResult> GetHabilidades()
+        {
+            try
+            {
+                List<Habilidade> habilidades = new List<Habilidade>();
+                habilidades = await _context.TB_HABILIDADES.ToListAsync();
+                return Ok(habilidades);
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
 
 // (7) Método DeletePersonagemHabilidade
-[HttpPost("DeletePersonagemHabilidade/{personagemId}/{habilidadeId}")]
-public async Task<IActionResult> DeletePersonagemHabilidade(int personagemId, int habilidadeId)
-{
-    try
-    {
-        var personagemHabilidade = await _context.TB_PERSONAGENS_HABILIDADES
-            .FirstOrDefaultAsync(ph => ph.PersonagemId == personagemId && ph.HabilidadeId == habilidadeId);
-
-        if (personagemHabilidade == null)
+[HttpPost("DeletePersonagemHabilidade")]
+        public async Task<IActionResult> DeleteAsync(PersonagemHabilidade ph)
         {
-            return NotFound("Personagem e Habilidade não estão associados.");
-        }
-        _context.TB_PERSONAGENS_HABILIDADES.Remove(personagemHabilidade);
-        int linhasAfetadas = await _context.SaveChangesAsync();
+            try
+            {
+               PersonagemHabilidade? phRemover = await _context.TB_PERSONAGENS_HABILIDADES
+                    .FirstOrDefaultAsync(phBusca => phBusca.PersonagemId == ph.PersonagemId
+                     && phBusca.HabilidadeId == ph.HabilidadeId);
+                if(phRemover == null)
+                    throw new System.Exception("Personagem ou Habilidade não encontrados");
 
-        return Ok($"Relação removida com sucesso: {linhasAfetadas}");
-    }
-    catch (System.Exception ex)
-    {
-        return BadRequest(ex.Message);
-    }
-}
+                _context.TB_PERSONAGENS_HABILIDADES.Remove(phRemover);
+                int linhasAfetadas = await _context.SaveChangesAsync();
+                return Ok(linhasAfetadas);
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
     }
 }

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RpgApi.Data;
 using RpgApi.Controllers;
+using RpgApi.Models;
 
 namespace RpgApi.Controllers
 {
@@ -53,46 +54,50 @@ namespace RpgApi.Controllers
         }
 
 // (1) Método AlterarSenha
-[HttpPut("NovaSenha")]
-public async Task<IActionResult> AlterarSenha(Usuario user)
+[HttpPut("AlterarSenha")]
+public async Task<IActionResult> AlterarSenhaUsuario(Usuario credenciais)
 {
-    try
-    {
-        Criptografia.CriarPasswordHash(user.PasswordString, out byte[] hash, out byte[] salt);
-        user.PasswordString = string.Empty; 
-        user.PasswordHash = hash;
-        user.PasswordSalt = salt;
-        var usuarioExistente = await _context.TB_USUARIOS
-            .FirstOrDefaultAsync(x => x.Username.ToLower().Equals(user.Username.ToLower()));
+      try
+         {
+             Usuario? usuario = await _context.TB_USUARIOS //Busca o usuário no banco através do login
+                .FirstOrDefaultAsync(x => x.Username.ToLower().Equals(credenciais.Username.ToLower()));
 
-        if (usuarioExistente == null)
-        {
-            return NotFound("Usuário não encontrado.");
-        }
+             if (usuario == null) //Se não achar nenhum usuário pelo login, retorna mensagem.
+                 throw new System.Exception("Usuário não encontrado.");
 
-        usuarioExistente.PasswordHash = hash;
-        usuarioExistente.PasswordSalt = salt;
+             Criptografia.CriarPasswordHash(credenciais.PasswordString, out byte[] hash, out byte[] salt);
+            usuario.PasswordHash = hash; //Se o usuário existir, executa a criptografia 
+            usuario.PasswordSalt = salt; //guardando o hash e o salt nas propriedades do usuário 
+
+             _context.TB_USUARIOS.Update(usuario);
+              int linhasAfetadas = await _context.SaveChangesAsync(); //Confirma a alteração no banco
+              return Ok(linhasAfetadas); //Retorna as linhas afetadas (Geralmente sempre 1 linha msm)
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message + " - " + ex.InnerException);
+            }
         
-        await _context.SaveChangesAsync();
-
-        return Ok("Senha alterada com sucesso!.");
-    }
-    catch (System.Exception ex)
-    {
-        return BadRequest(ex.Message + " - " + ex.InnerException?.Message);
-    }
 }
 
 // (2) Método GetAllUsers
 [HttpGet("GetAllUsers")]
 public async Task<IActionResult> GetAll()
 {
-    var usuarios = await _context.TB_USUARIOS.ToListAsync();
-    return Ok(usuarios);
+    
+   try
+     {
+         List<Usuario> lista = await _context.TB_USUARIOS.ToListAsync();
+         return Ok(lista);
+   }
+  catch (System.Exception ex)
+      {
+         return BadRequest(ex.Message + " - " + ex.InnerException);
+     }
 }
 
 // (3) AutenticarUsuario
-[HttpPost("Autenticar")]
+[HttpPost("AutenticarUsuario")]
 public async Task<IActionResult> AutenticarUsuario(Usuario credenciais)
 {
     try
@@ -111,7 +116,9 @@ public async Task<IActionResult> AutenticarUsuario(Usuario credenciais)
         else
         {
             usuario.DataAcesso = DateTime.Now;
+            _context.TB_USUARIOS.Update(usuario);
             await _context.SaveChangesAsync();
+
             return Ok(usuario);
         }
     }
@@ -122,18 +129,25 @@ public async Task<IActionResult> AutenticarUsuario(Usuario credenciais)
 }
 
 // (4) Método GetByNome
-[HttpGet("GetByNome/{nome}")]
-public async Task<IActionResult> GetByNome(string nome)
+[HttpGet("{id}")]
+public async Task<IActionResult> GetSingle (int id)
 {
-    var personagens = await _context.TB_PERSONAGENS
-        .Include(p => p.Usuario) 
-        .Where(p => p.Nome.Contains(nome))
-        .ToListAsync();
+    try
+    {
+       Personagem? p = await _context.TB_PERSONAGENS
+                .Include(ar => ar.Arma)
+                .Include(us => us.Usuario)
+                .Include(p => p.PersonagemHabilidade)
+                    .ThenInclude(ps => ps.Habilidade)
+                .FirstOrDefaultAsync(pBusca => pBusca.Id == id);
 
-    if (personagens == null || personagens.Count == 0)
-        return NotFound("Nenhum personagem encontrado.");
+                return Ok(p);
+   }
+   catch (System.Exception ex)
+     {
+     return BadRequest(ex.Message);
+     }
 
-    return Ok(personagens);
 }
 }
 }
