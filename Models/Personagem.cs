@@ -26,22 +26,17 @@ namespace RpgApi.Models
 
         [JsonIgnore]
         public Arma? Arma { get; set; }
-        [JsonIgnore]
-        public PersonagemHabilidade? PersonagemHabilidade { get; set; }
+        
+        //[JsonIgnore]
+        //public PersonagemHabilidade? PersonagemHabilidade { get; set; }
+        
         public int Disputas { get; set; }
         public int Vitorias { get; set; }
         public int Derrotas { get; set; }
 
-
-
-
-
-
-
-        internal static List<Personagem> FindAll(Func<object, bool> value)
-        {
-            throw new NotImplementedException();
-        }
+        
+        public List<PersonagemHabilidade> PersonagemHabilidades { get; set; } = [];
+      
     }
 }
 

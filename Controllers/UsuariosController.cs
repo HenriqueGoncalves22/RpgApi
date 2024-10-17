@@ -137,8 +137,8 @@ public async Task<IActionResult> GetSingle (int id)
        Personagem? p = await _context.TB_PERSONAGENS
                 .Include(ar => ar.Arma)
                 .Include(us => us.Usuario)
-                .Include(p => p.PersonagemHabilidade)
-                    .ThenInclude(ps => ps.Habilidade)
+                /*.Include(p => p.PersonagemHabilidade)
+                    .ThenInclude(ps => ps.Habilidade)*/
                 .FirstOrDefaultAsync(pBusca => pBusca.Id == id);
 
                 return Ok(p);

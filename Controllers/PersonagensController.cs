@@ -28,7 +28,7 @@ namespace RpgApi.Controllers
             {
                 Personagem p = await _context.TB_PERSONAGENS
                 .Include(ar => ar.Arma)
-                .Include(ph => ph.PersonagemHabilidade)
+                .Include(ph => ph.PersonagemHabilidades)
                     .ThenInclude(h => h.Habilidade)
                 .FirstOrDefaultAsync(pBusca => pBusca.Id == id);
                 
