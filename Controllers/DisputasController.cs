@@ -13,6 +13,7 @@ using RpgApi.Data;
 using RpgApi.Models;
 using RpgApi.Controllers;
 using System.Security.Cryptography;
+using GamingAPI.Models;
 
 namespace RpgApi.Controllers
 {
@@ -69,14 +70,14 @@ namespace RpgApi.Controllers
                 return BadRequest(ex.Message);
             }
         }
-/*
+
         [HttpPost("Habilidade")]
         public async Task<IActionResult> AtaqueComHabilidadeAsync(Disputa d)
         {
             try
             {
                 Personagem atacante = await _context.TB_PERSONAGENS
-                .Include(p => p.PersonagemHabilidade).ThenInclude(ph => ph.Habilidade)
+                .Include(p => p.PersonagemHabilidades).ThenInclude(ph => ph.Habilidade)
                 .FirstOrDefaultAsync(p => p.Id == d.AtacanteId);
 
                 Personagem oponente = await _context.TB_PERSONAGENS
@@ -120,7 +121,7 @@ namespace RpgApi.Controllers
                 return BadRequest(ex.Message);
             }
         }
-*/
+
         [HttpPost("DisputaEmGrupo")]
         public async Task<IActionResult> DisputaEmGrupoAsync(Disputa d)
         {
@@ -215,9 +216,7 @@ namespace RpgApi.Controllers
                 return BadRequest(ex.Message);
             }
         }
-    }
-}
-/*
+    
         [HttpDelete("ApagarDisputas")]
         public async Task<IActionResult> DeleteAsync()
         {
@@ -236,11 +235,25 @@ namespace RpgApi.Controllers
         }
 
         [HttpGet("Listar")]
-        public async Task<IActionResult> ListarAsync
+        public async Task<IActionResult> ListarAsync()
+        {
+            try
+            {
+                List<Disputa> disputas = await _context.TB_DISPUTAS.ToListAsync();
+                return Ok(disputas);
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+
+
 
 
         
 
 
     }
-}*/
+}

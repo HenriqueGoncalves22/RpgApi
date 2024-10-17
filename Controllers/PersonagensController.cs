@@ -7,6 +7,17 @@ using Microsoft.AspNetCore.Mvc;
 using RpgApi.Models;
 using Microsoft.EntityFrameworkCore;
 using RpgApi.Data;
+using RpgApi;
+using System.Diagnostics;
+using System.Text;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using RpgApi.Controllers;
+using System.Security.Cryptography;
+using GamingAPI.Models;
+
+
 
 namespace RpgApi.Controllers
 {
@@ -21,7 +32,7 @@ namespace RpgApi.Controllers
             _context = context;
         }
 
-      [HttpGet("{id}")]
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetSingle(int id)
         {
             try
@@ -31,7 +42,7 @@ namespace RpgApi.Controllers
                 .Include(ph => ph.PersonagemHabilidades)
                     .ThenInclude(h => h.Habilidade)
                 .FirstOrDefaultAsync(pBusca => pBusca.Id == id);
-                
+
                 return Ok(p);
             }
             catch (System.Exception ex)
@@ -40,26 +51,26 @@ namespace RpgApi.Controllers
             }
         }
         [HttpGet("GetAll")]
-        
-            public async Task<IActionResult> Get()
+
+        public async Task<IActionResult> Get()
+        {
+            try
             {
-                try
-                {
-                    List<Personagem> lista = await _context.TB_PERSONAGENS.ToListAsync();
-                    return Ok(lista);
-                }
-                catch(System.Exception ex)
-                {
-                    return BadRequest(ex.Message);
-                }
+                List<Personagem> lista = await _context.TB_PERSONAGENS.ToListAsync();
+                return Ok(lista);
             }
-        
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpPost]
         public async Task<IActionResult> Add(Personagem novoPersonagem)
         {
             try
             {
-                if(novoPersonagem.PontosVida > 100)
+                if (novoPersonagem.PontosVida > 100)
                 {
                     throw new Exception("Pontos de vida não pode ser maior que 100");
                 }
@@ -68,7 +79,7 @@ namespace RpgApi.Controllers
 
                 return Ok(novoPersonagem.Id);
             }
-            catch(System.Exception ex)
+            catch (System.Exception ex)
             {
                 return BadRequest(ex.Message);
             }
@@ -78,7 +89,7 @@ namespace RpgApi.Controllers
         {
             try
             {
-                 if(novoPersonagem.PontosVida > 100)
+                if (novoPersonagem.PontosVida > 100)
                 {
                     throw new System.Exception("Pontos de vida não pode ser maior que 100");
                 }
@@ -87,7 +98,7 @@ namespace RpgApi.Controllers
 
                 return Ok(linhasAfetadas);
             }
-            catch(System.Exception ex)
+            catch (System.Exception ex)
             {
                 return BadRequest(ex.Message);
             }
@@ -104,7 +115,239 @@ namespace RpgApi.Controllers
 
                 return Ok(linhasAfetadas);
             }
-            catch(System.Exception ex)
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        [HttpPut("RestaurarPontosVida")]
+        public async Task<IActionResult> RestaurarPontosVidaAsync(Personagem p)
+        {
+            try
+            {
+                int linhasAfetadas = 0;
+                Personagem? pEncontrado = await _context.TB_PERSONAGENS.FirstOrDefaultAsync(pBusca => pBusca.Id == p.Id);
+                pEncontrado.PontosVida = 100;
+
+                bool atualizou = await TryUpdateModelAsync<Personagem>(pEncontrado, "p", pAtualizar => pAtualizar.PontosVida);
+
+                if (atualizou)
+                    linhasAfetadas = await _context.SaveChangesAsync();
+                return Ok(linhasAfetadas);
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPut("AtualizarFoto")]
+        public async Task<IActionResult> AtualizarFotoAsync(Personagem p)
+        {
+            try
+            {
+                Personagem personagem = await _context.TB_PERSONAGENS.FirstOrDefaultAsync(x => x.Id == p.Id);
+                personagem.FotoPersonagem = p.FotoPersonagem;
+                var attach = _context.Attach(personagem);
+                attach.Property(x => x.Id).IsModified = false;
+                attach.Property(x => x.FotoPersonagem).IsModified = true;
+                int linhasAfetadas = await _context.SaveChangesAsync();
+                return Ok(linhasAfetadas);
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPut("ZerarRanking")]
+        public async Task<IActionResult> ZerarRankingAsync(Personagem p)
+        {
+            try
+            {
+                Personagem pEncontrado = await _context.TB_PERSONAGENS.FirstOrDefaultAsync(pBusca => pBusca.Id == p.Id);
+
+                pEncontrado.Disputas = 0;
+                pEncontrado.Vitorias = 0;
+                pEncontrado.Derrotas = 0;
+                int linhasAfetadas = 0;
+
+                bool atualizou = await TryUpdateModelAsync<Personagem>(pEncontrado, "p",
+                     pAtualizar => pAtualizar.Disputas,
+                     pAtualizar => pAtualizar.Vitorias,
+                     pAtualizar => pAtualizar.Derrotas);
+
+                if (atualizou)
+                    linhasAfetadas = await _context.SaveChangesAsync();
+
+                return Ok(linhasAfetadas);
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        [HttpPut("ZerarRankingRestaurarVidas")]
+        public async Task<IActionResult> ZerarRankingRestaurarVidasAsync()
+        {
+            try
+            {
+                List<Personagem> lista = await _context.TB_PERSONAGENS.ToListAsync();
+
+                foreach (Personagem p in lista)
+                {
+                    await ZerarRankingAsync(p);
+                    await RestaurarPontosVidaAsync(p);
+                }
+                return Ok();
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("GetByUser/{userId}")]
+        public async Task<IActionResult> GetByUserAsync(int userId)
+        {
+            try
+            {
+                List<Personagem> lista = await _context.TB_PERSONAGENS.Where(u => u.Usuario.Id == userId).ToListAsync();
+                return Ok(lista);
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("GetByPerfil/{userId}")]
+        public async Task<IActionResult> GetByPerfilAsync(int userId)
+        {
+            try
+            {
+                Usuario usuario = await _context.TB_USUARIOS
+                .FirstOrDefaultAsync(x => x.Id == userId);
+                List<Personagem> lista = new List<Personagem>();
+                if (usuario.Perfil == "Admin")
+                    lista = await _context.TB_PERSONAGENS.ToListAsync();
+                else
+                    lista = await _context.TB_PERSONAGENS
+                    .Where(p => p.Usuario.Id == userId).ToListAsync();
+                return Ok(lista);
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        [HttpGet("GetByNomeAproximado/{nomePersonagem}")]
+        public async Task<IActionResult> GetByNomeAproximado(string nomePersonagem)
+        {
+            try
+            {
+                List<Personagem> lista = await _context.TB_PERSONAGENS
+                .Where(p => p.Nome.ToLower().Contains(nomePersonagem.ToLower()))
+                .ToListAsync();
+                return Ok(lista);
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("{usuarioId}")]
+        public async Task<IActionResult> GetUsuario(int usuarioId)
+        {
+            try
+            {
+                //List exigirá o using System.Collections.Generic
+                Usuario usuario = await _context.TB_USUARIOS //Busca o usuário no banco através do Id
+                .FirstOrDefaultAsync(x => x.Id == usuarioId);
+                return Ok(usuario);
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("GetByLogin/{login}")]
+        public async Task<IActionResult> GetUsuario(string login)
+        {
+            try
+            {
+                //List exigirá o using System.Collections.Generic
+                Usuario usuario = await _context.TB_USUARIOS //Busca o usuário no banco através do login
+                .FirstOrDefaultAsync(x => x.Username.ToLower() == login.ToLower());
+                return Ok(usuario);
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        //Método para alteração da geolocalização
+        [HttpPut("AtualizarLocalizacao")]
+        public async Task<IActionResult> AtualizarLocalizacao(Usuario u)
+        {
+            try
+            {
+                Usuario usuario = await _context.TB_USUARIOS //Busca o usuário no banco através do Id
+                .FirstOrDefaultAsync(x => x.Id == u.Id);
+                usuario.Latitude = u.Latitude;
+                usuario.Longitude = u.Longitude;
+                var attach = _context.Attach(usuario);
+                attach.Property(x => x.Id).IsModified = false;
+                attach.Property(x => x.Latitude).IsModified = true;
+                attach.Property(x => x.Longitude).IsModified = true;
+                int linhasAfetadas = await _context.SaveChangesAsync(); //Confirma a alteração no banco
+                return Ok(linhasAfetadas); //Retorna as linhas afetadas (Geralmente sempre 1 linha msm)
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPut("AtualizarEmail")]
+        public async Task<IActionResult> AtualizarEmail(Usuario u)
+        {
+            try
+            {
+                Usuario usuario = await _context.TB_USUARIOS //Busca o usuário no banco através do Id
+                .FirstOrDefaultAsync(x => x.Id == u.Id);
+                usuario.Email = u.Email;
+                var attach = _context.Attach(usuario);
+                attach.Property(x => x.Id).IsModified = false;
+                attach.Property(x => x.Email).IsModified = true;
+                int linhasAfetadas = await _context.SaveChangesAsync(); //Confirma a alteração no banco
+                return Ok(linhasAfetadas); //Retorna as linhas afetadas (Geralmente sempre 1 linha msm)
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        //Método para alteração da foto
+        [HttpPut("AtualizarFoto")]
+        public async Task<IActionResult> AtualizarFoto(Usuario u)
+        {
+            try
+            {
+                Usuario usuario = await _context.TB_USUARIOS
+                .FirstOrDefaultAsync(x => x.Id == u.Id);
+                usuario.Foto = u.Foto;
+                var attach = _context.Attach(usuario);
+                attach.Property(x => x.Id).IsModified = false;
+                attach.Property(x => x.Foto).IsModified = true;
+                int linhasAfetadas = await _context.SaveChangesAsync();
+                return Ok(linhasAfetadas);
+            }
+            catch (System.Exception ex)
             {
                 return BadRequest(ex.Message);
             }
