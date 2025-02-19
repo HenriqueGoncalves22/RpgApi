@@ -104,10 +104,13 @@ namespace RpgApi.Controllers
                 }
                 else
                 {
+                    usuario.DataAcesso = System.DateTime.Now;
+                    _context.TB_USUARIOS.Update(usuario);
+                    await _context.SaveChangesAsync();
+
                     usuario.PasswordHash = null;
                     usuario.PasswordSalt = null;
                     usuario.Token = CriarToken(usuario);
-
                     return Ok(usuario);
                 }
             }
